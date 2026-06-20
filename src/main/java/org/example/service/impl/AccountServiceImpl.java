@@ -5,7 +5,6 @@ import org.example.exception.BusinessException;
 import org.example.exception.ValidationException;
 import org.example.repository.AccountRepository;
 import org.example.repository.impl.AccountRepositoryImpl;
-import org.example.security.PasswordEncoder;
 import org.example.service.AccountService;
 
 import java.time.LocalDateTime;
@@ -45,7 +44,7 @@ public class AccountServiceImpl implements AccountService {
 
         Account account = accountOpt.get();
 
-        if (!PasswordEncoder.matches(matKhauTho, account.getMatKhau())) {
+        if (!matKhauTho.equals(account.getMatKhau())) {
             throw new BusinessException("Sai tài khoản hoặc mật khẩu");
         }
 
@@ -83,9 +82,7 @@ public class AccountServiceImpl implements AccountService {
             throw new BusinessException("Nhân viên này đã có tài khoản");
         }
 
-        String matKhauMaHoa = PasswordEncoder.encode(matKhauTho);
-
-        Account account = new Account(maNv, tenDangNhap.trim(), matKhauMaHoa,
+        Account account = new Account(maNv, tenDangNhap.trim(), matKhauTho,
                 vaiTro != null ? vaiTro : Account.Role.NHAN_VIEN);
 
         return accountRepository.save(account);
@@ -100,11 +97,11 @@ public class AccountServiceImpl implements AccountService {
         Account account = accountRepository.findById(maTk)
                 .orElseThrow(() -> new BusinessException("Không tìm thấy tài khoản"));
 
-        if (!PasswordEncoder.matches(matKhauCu, account.getMatKhau())) {
+        if (!matKhauCu.equals(account.getMatKhau())) {
             throw new BusinessException("Mật khẩu cũ không đúng");
         }
 
-        account.setMatKhau(PasswordEncoder.encode(matKhauMoi));
+        account.setMatKhau(matKhauMoi);
         boolean updated = accountRepository.update(account);
         if (!updated) {
             throw new BusinessException("Đổi mật khẩu thất bại");
@@ -118,7 +115,7 @@ public class AccountServiceImpl implements AccountService {
         Account account = accountRepository.findById(maTk)
                 .orElseThrow(() -> new BusinessException("Không tìm thấy tài khoản"));
 
-        account.setMatKhau(PasswordEncoder.encode(matKhauMoi));
+        account.setMatKhau(matKhauMoi);
         boolean updated = accountRepository.update(account);
         if (!updated) {
             throw new BusinessException("Đặt lại mật khẩu thất bại");

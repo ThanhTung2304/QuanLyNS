@@ -25,7 +25,7 @@ public class Account {
     private Integer maTk;                  // ma_tk - PK, AUTO_INCREMENT
     private String maNv;                   // ma_nv - FK -> nhan_vien.ma_nv (UNIQUE, quan hệ 1-1)
     private String tenDangNhap;            // ten_dang_nhap - UNIQUE
-    private String matKhau;                // mat_khau - lưu hash BCrypt
+    private String matKhau;                // mat_khau
     private Role vaiTro;                   // vai_tro
     private Status trangThai;              // trang_thai
     private LocalDateTime lanDangNhapCuoi;  // lan_dang_nhap_cuoi - nullable

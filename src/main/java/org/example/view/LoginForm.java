@@ -16,7 +16,7 @@ import java.awt.event.ActionEvent;
 public class LoginForm extends JFrame {
 
     private JTextField txtTenDangNhap;
-    private JPasswordField txtMatKhau;
+    private JTextField txtMatKhau;
     private JButton btnDangNhap;
     private JButton btnThoat;
 
@@ -64,7 +64,7 @@ public class LoginForm extends JFrame {
         gbc.gridx = 0;
         mainPanel.add(new JLabel("Mật khẩu:"), gbc);
 
-        txtMatKhau = new JPasswordField(18);
+        txtMatKhau = new JTextField(18);
         gbc.gridx = 1;
         mainPanel.add(txtMatKhau, gbc);
 
@@ -92,7 +92,7 @@ public class LoginForm extends JFrame {
 
     private void onDangNhap(ActionEvent e) {
         String tenDangNhap = txtTenDangNhap.getText().trim();
-        String matKhau = new String(txtMatKhau.getPassword());
+        String matKhau = txtMatKhau.getText();
 
         if (tenDangNhap.isEmpty() || matKhau.isEmpty()) {
             JOptionPane.showMessageDialog(this,
