@@ -191,13 +191,14 @@ COMMENT='Bảng lương tính toán theo tháng cho từng nhân viên';
 --    Quan hệ: NhanVien (1) ----- (1) TaiKhoan
 --    vai_tro tương ứng 4 Actor trong Use Case Diagram (3.1.3):
 --    ADMIN, HR, TRUONG_PHONG, NHAN_VIEN
+--    LƯU Ý: mat_khau lưu dạng PLAIN TEXT (không mã hoá BCrypt)
 -- =====================================================================
 DROP TABLE IF EXISTS tai_khoan;
 CREATE TABLE tai_khoan (
     ma_tk           INT             NOT NULL AUTO_INCREMENT,
     ma_nv           VARCHAR(10)     NOT NULL,
     ten_dang_nhap   VARCHAR(50)     NOT NULL,
-    mat_khau        VARCHAR(255)    NOT NULL COMMENT 'Lưu mã hoá bằng BCrypt (jBCrypt)',
+    mat_khau        VARCHAR(100)    NOT NULL COMMENT 'Lưu dạng văn bản thuần (plain text), không mã hoá',
     vai_tro         ENUM('ADMIN','HR','TRUONG_PHONG','NHAN_VIEN')
                                     NOT NULL DEFAULT 'NHAN_VIEN',
     trang_thai      ENUM('HOAT_DONG','KHOA')   NOT NULL DEFAULT 'HOAT_DONG',
@@ -235,21 +236,9 @@ INSERT INTO hop_dong (ma_hd, ma_nv, loai_hd, ngay_bat_dau, ngay_ket_thuc, luong_
 ('HD001', 'NV001', 'CHINH_THUC', '2022-01-01', NULL, 15000000),
 ('HD002', 'NV002', 'KINH_DOANH_KPI', '2023-03-15', NULL, 8000000);
 
+-- Mật khẩu lưu trực tiếp dạng plain text, KHÔNG còn mã hoá BCrypt
 INSERT INTO tai_khoan (ma_nv, ten_dang_nhap, mat_khau, vai_tro) VALUES
-('NV001', 'annv', '$2a$10$placeholderBCryptHash', 'TRUONG_PHONG'),
-('NV002', 'binhtt', '$2a$10$placeholderBCryptHash', 'NHAN_VIEN');
-
--- UPDATE tai_khoan
--- SET mat_khau = '$2a$10$mH5lJ6gYQ6P7qLkZ7j3f8uQ8mY9j8M9xFZ0W3pRbzTQZ5WqR4nB7a'
--- WHERE ten_dang_nhap IN ('anny', 'binhtt');
-
--- SELECT ten_dang_nhap, LENGTH(mat_khau), mat_khau
--- FROM tai_khoan;
-
--- UPDATE tai_khoan
--- SET mat_khau = '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiFUFiTiIfqBKpQCo6bn7E30ADr2UsC'
--- WHERE ten_dang_nhap IN ('annv', 'binhtt');
+('NV001', 'annv', '123456', 'TRUONG_PHONG'),
+('NV002', 'binhtt', '123456', 'NHAN_VIEN');
 
 SELECT * FROM tai_khoan;
-
---tk đăng nhập: annv, binhtt/password: 123456 (đã mã hoá bằng BCrypt)

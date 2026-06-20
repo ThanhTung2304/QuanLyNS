@@ -17,7 +17,7 @@ public interface AccountService {
      * Xác thực đăng nhập.
      *
      * @param tenDangNhap tên đăng nhập người dùng nhập
-     * @param matKhauTho  mật khẩu thô (chưa mã hoá) người dùng nhập
+     * @param matKhauTho  mật khẩu người dùng nhập
      * @return Account nếu đăng nhập thành công
      * @throws BusinessException nếu sai tài khoản/mật khẩu hoặc tài khoản bị khoá
      */
