@@ -241,4 +241,36 @@ INSERT INTO tai_khoan (ma_nv, ten_dang_nhap, mat_khau, vai_tro) VALUES
 ('NV001', 'annv', '123456', 'TRUONG_PHONG'),
 ('NV002', 'binhtt', '123456', 'NHAN_VIEN');
 
+-- 1. Thêm nhân viên có mã NV003 vào trước (khớp hoàn toàn ENUM 'DANG_LAM_VIEC')
+INSERT INTO nhan_vien (
+    ma_nv, ho_ten, ngay_sinh, gioi_tinh, dia_chi,
+    email, so_dien_thoai, ma_phong, ma_chuc_vu,
+    trang_thai, ngay_vao_lam
+) VALUES (
+    'NV003', 'Hệ Thống Admin', '1990-01-01', 'NAM', 'Hà Nội',
+    'admin@company.vn', '0903456789', 'PB01', 'CV01',
+    'DANG_LAM_VIEC', '2022-01-01'
+);
+
+-- 2. Tạo tài khoản liên kết với NV003 (mặc định trang_thai sẽ tự ăn theo DEFAULT 'HOAT_DONG')
+INSERT INTO tai_khoan (ma_nv, ten_dang_nhap, mat_khau, vai_tro)
+VALUES ('NV003', 'admin', '123456', 'ADMIN');
+
+CREATE TABLE IF NOT EXISTS cau_hinh (
+    setting_key VARCHAR(50) PRIMARY KEY,
+    setting_value VARCHAR(100) NOT NULL,
+    mo_ta VARCHAR(255)
+) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+COMMENT='Bảng lưu trữ các cấu hình hệ thống';
+
+-- Chèn dữ liệu mặc định ban đầu
+INSERT INTO cau_hinh (setting_key, setting_value, mo_ta) VALUES
+('GIO_VAO_SANG', '08:00:00', 'Giờ bắt đầu làm việc buổi sáng'),
+('GIO_RA_CHIEU', '17:30:00', 'Giờ kết thúc làm việc buổi chiều'),
+('SO_PHUT_DI_MUON_CHO_PHEP', '15', 'Số phút tối đa được phép đi muộn (phút)')
+ON DUPLICATE KEY UPDATE setting_value = setting_value;
+
+ALTER TABLE bang_luong
+ADD COLUMN so_ngay_cong INT NOT NULL DEFAULT 0 COMMENT 'Số ngày công thực tế đã dùng để tính lương' AFTER nam;
+
 SELECT * FROM tai_khoan;
