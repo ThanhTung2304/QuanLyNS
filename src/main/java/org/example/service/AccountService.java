@@ -65,4 +65,9 @@ public interface AccountService {
      * Lấy danh sách toàn bộ tài khoản (dùng cho màn hình quản lý tài khoản - ADMIN).
      */
     List<Account> getAllAccounts();
+    
+    /**
+     * Thay đổi vai trò của tài khoản.
+     */
+    void changeRole(Integer maTk, Account.Role newRole) throws BusinessException;
 }

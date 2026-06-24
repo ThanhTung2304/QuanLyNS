@@ -1,177 +1,255 @@
 package org.example.view;
 
 import org.example.controller.AccountController;
+import org.example.controller.DashboardController;
+import org.example.dto.DashboardStats;
 import org.example.entity.Account;
-import org.example.security.RoleChecker;
 import org.example.security.SessionManager;
+import org.example.view.layout.Footer;
+import org.example.view.layout.Header;
+import org.example.view.layout.Sidebar;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
-import javax.swing.WindowConstants;
-import java.awt.BorderLayout;
-import java.awt.CardLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.GridBagLayout;
+import javax.swing.*;
+import java.awt.*;
+import java.math.BigDecimal;
+import java.text.NumberFormat;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 public class MainFrame extends JFrame {
-    private static final String CARD_HOME = "HOME";
-    private static final String CARD_EMPLOYEE = "EMPLOYEE";
-    private static final String CARD_DEPARTMENT = "DEPARTMENT";
-    private static final String CARD_ACCOUNT = "ACCOUNT";
 
     private final AccountController accountController;
+    private final DashboardController dashboardController;
     private final CardLayout cardLayout;
     private final JPanel contentPanel;
+    private Sidebar sidebar;
+
+    private final Map<String, String> menuCardMap = new HashMap<>();
 
     public MainFrame() {
         this.accountController = new AccountController();
+        this.dashboardController = new DashboardController();
         this.cardLayout = new CardLayout();
         this.contentPanel = new JPanel(cardLayout);
+        
+        initMenuCardMap();
         initComponents();
     }
 
-    private void initComponents() {
-        Account account = SessionManager.getInstance().getCurrentAccount();
-        if (account == null) {
-            account = new Account();
-            account.setTenDangNhap("guest");
-        }
-
-        setTitle("Quan ly nhan su");
-        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        setSize(1100, 700);
-        setLocationRelativeTo(null);
-        setLayout(new BorderLayout());
-
-        setJMenuBar(buildMenuBar());
-        add(buildHeader(account), BorderLayout.NORTH);
-        add(buildSidebar(), BorderLayout.WEST);
-        buildContentCards();
-        add(contentPanel, BorderLayout.CENTER);
-
-        cardLayout.show(contentPanel, CARD_HOME);
+    private void initMenuCardMap() {
+        menuCardMap.put("Trang chủ", "HOME");
+        menuCardMap.put("Hồ sơ của tôi", "MY_PROFILE");
+        menuCardMap.put("Quản lý Nhân viên", "EMPLOYEE");
+        menuCardMap.put("Quản lý Hợp đồng", "HOP_DONG");
+        menuCardMap.put("Chấm công", "CHAM_CONG");
+        menuCardMap.put("Tính lương", "LUONG");
+        menuCardMap.put("Quản lý Phòng ban", "DEPARTMENT");
+        menuCardMap.put("Quản lý Chức vụ", "CHUC_VU");
+        menuCardMap.put("Quản lý Tài khoản", "ACCOUNT");
+        menuCardMap.put("Xin nghỉ phép", "NGHI_PHEP");
+        menuCardMap.put("Duyệt nghỉ phép", "DUYET_NGHI_PHEP");
+        menuCardMap.put("Cấu hình Chấm công", "CAU_HINH");
     }
 
-    private JMenuBar buildMenuBar() {
+    private void initComponents() {
+        setTitle("Hệ thống Quản lý Nhân sự");
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setMinimumSize(new Dimension(1280, 800));
+        setLayout(new BorderLayout());
+
+        Account.Role currentUserRole = SessionManager.getInstance().getCurrentRole();
+        
+        sidebar = new Sidebar(currentUserRole);
+        Header header = new Header(this::onLogout);
+        Footer footer = new Footer();
+
+        setJMenuBar(createMainMenuBar());
+        add(header, BorderLayout.NORTH);
+        add(sidebar, BorderLayout.WEST);
+        add(contentPanel, BorderLayout.CENTER);
+        add(footer, BorderLayout.SOUTH);
+
+        buildContentCards();
+        setupMenuActions();
+
+        cardLayout.show(contentPanel, "HOME");
+        sidebar.setActiveMenu("Trang chủ");
+    }
+
+    private JMenuBar createMainMenuBar() {
         JMenuBar menuBar = new JMenuBar();
-        JMenu systemMenu = new JMenu("He thong");
+        JMenu systemMenu = new JMenu("Hệ thống");
 
-        JMenuItem logoutItem = new JMenuItem("Dang xuat");
+        if (SessionManager.getInstance().getCurrentRole() == Account.Role.ADMIN) {
+            JMenuItem cauHinhItem = new JMenuItem("Cấu hình Chấm công");
+            cauHinhItem.addActionListener(e -> switchCard("Cấu hình Chấm công"));
+            systemMenu.add(cauHinhItem);
+            systemMenu.addSeparator();
+        }
+
+        JMenuItem logoutItem = new JMenuItem("Đăng xuất");
         logoutItem.addActionListener(e -> onLogout());
-
-        JMenuItem exitItem = new JMenuItem("Thoat");
-        exitItem.addActionListener(e -> System.exit(0));
-
         systemMenu.add(logoutItem);
+        
+        JMenuItem exitItem = new JMenuItem("Thoát");
+        exitItem.addActionListener(e -> System.exit(0));
         systemMenu.add(exitItem);
+        
         menuBar.add(systemMenu);
         return menuBar;
     }
 
-    private JPanel buildHeader(Account account) {
-        JPanel header = new JPanel(new BorderLayout());
-        header.setBorder(BorderFactory.createEmptyBorder(12, 16, 12, 16));
-        header.setBackground(new Color(33, 47, 61));
-
-        JLabel welcomeLabel = new JLabel(
-                "Xin chao, " + account.getTenDangNhap() + " (" + account.getVaiTro() + ")"
-        );
-        welcomeLabel.setForeground(Color.WHITE);
-        welcomeLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        header.add(welcomeLabel, BorderLayout.WEST);
-
-        JButton logoutButton = new JButton("Dang xuat");
-        logoutButton.addActionListener(e -> onLogout());
-
-        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        actionPanel.setOpaque(false);
-        actionPanel.add(logoutButton);
-        header.add(actionPanel, BorderLayout.EAST);
-
-        return header;
-    }
-
-    private JPanel buildSidebar() {
-        JPanel sidebar = new JPanel();
-        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
-        sidebar.setPreferredSize(new Dimension(220, 0));
-        sidebar.setBorder(BorderFactory.createEmptyBorder(16, 10, 16, 10));
-        sidebar.setBackground(new Color(245, 246, 248));
-
-        sidebar.add(createSidebarButton("Trang chu", CARD_HOME));
-        sidebar.add(Box.createVerticalStrut(8));
-        sidebar.add(createSidebarButton("Nhan vien", CARD_EMPLOYEE));
-
-        if (RoleChecker.canManageHr()) {
-            sidebar.add(Box.createVerticalStrut(8));
-            sidebar.add(createSidebarButton("Phong ban", CARD_DEPARTMENT));
-        }
-
-        if (RoleChecker.isAdmin()) {
-            sidebar.add(Box.createVerticalStrut(8));
-            sidebar.add(createSidebarButton("Tai khoan", CARD_ACCOUNT));
-        }
-
-        sidebar.add(Box.createVerticalGlue());
-        return sidebar;
-    }
-
-    private JButton createSidebarButton(String label, String cardName) {
-        JButton button = new JButton(label);
-        button.setAlignmentX(Component.CENTER_ALIGNMENT);
-        button.setHorizontalAlignment(SwingConstants.LEFT);
-        button.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
-        button.setFocusPainted(false);
-        button.addActionListener(e -> cardLayout.show(contentPanel, cardName));
-        return button;
-    }
-
     private void buildContentCards() {
-        contentPanel.add(buildHomePanel(), CARD_HOME);
-        contentPanel.add(placeholderPanel("Quan ly nhan vien"), CARD_EMPLOYEE);
-        contentPanel.add(placeholderPanel("Quan ly phong ban"), CARD_DEPARTMENT);
-        contentPanel.add(placeholderPanel("Quan ly tai khoan"), CARD_ACCOUNT);
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        // Chỉ Admin mới thấy Dashboard, các vai trò khác thấy trang chào mừng
+        if (SessionManager.getInstance().getCurrentRole() == Account.Role.ADMIN) {
+            contentPanel.add(buildAdminDashboard(), "HOME");
+        } else {
+            contentPanel.add(buildWelcomePanel(), "HOME");
+        }
+        
+        contentPanel.add(new MyProfileView(), "MY_PROFILE");
+        contentPanel.add(new NhanVienView(), "EMPLOYEE");
+        contentPanel.add(new HopDongView(), "HOP_DONG");
+        contentPanel.add(new ChamCongView(), "CHAM_CONG");
+        contentPanel.add(new LuongView(), "LUONG");
+        contentPanel.add(new PhongBanView(), "DEPARTMENT");
+        contentPanel.add(new ChucVuView(), "CHUC_VU");
+        contentPanel.add(new AccountView(), "ACCOUNT");
+        contentPanel.add(new MyNghiPhepView(), "NGHI_PHEP");
+        contentPanel.add(new DuyetNghiPhepView(), "DUYET_NGHI_PHEP");
+        contentPanel.add(new CauHinhView(), "CAU_HINH");
     }
 
-    private JPanel buildHomePanel() {
+    private JPanel buildAdminDashboard() {
+        JPanel dashboardPanel = new JPanel(new GridLayout(1, 4, 20, 20));
+        dashboardPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        DashboardStats stats = dashboardController.getDashboardStats();
+        NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+
+        // Thẻ 1: Nhân sự
+        dashboardPanel.add(createStatCard(
+            "TỔNG QUAN NHÂN SỰ",
+            String.valueOf(stats.getTotalActiveEmployees()),
+            "Tổng số nhân viên",
+            new String[]{
+                "Nhân viên mới trong tháng: " + stats.getNewEmployeesThisMonth(),
+                "Nhân viên đã nghỉ: " + stats.getResignedEmployeesThisMonth()
+            }
+        ));
+
+        // Thẻ 2: Chấm công
+        dashboardPanel.add(createStatCard(
+            "CHẤM CÔNG HÔM NAY",
+            stats.getCheckInsToday() + " / " + stats.getTotalActiveEmployees(),
+            "Đã check-in",
+            new String[]{
+                "Đi muộn: " + stats.getLateCheckInsToday(),
+                "Vắng mặt: " + (stats.getTotalActiveEmployees() - stats.getCheckInsToday())
+            }
+        ));
+
+        // Thẻ 3: Lương
+        dashboardPanel.add(createStatCard(
+            "CHI PHÍ LƯƠNG (Tháng này)",
+            currencyFormatter.format(stats.getTotalSalaryThisMonth()),
+            "Tổng lương thực nhận",
+            new String[]{
+                "Tổng thưởng: " + currencyFormatter.format(stats.getTotalBonusThisMonth()),
+                "Tổng khấu trừ: " + currencyFormatter.format(stats.getTotalDeductionThisMonth())
+            }
+        ));
+
+        // Thẻ 4: Công việc
+        dashboardPanel.add(createStatCard(
+            "CÔNG VIỆC CẦN XỬ LÝ",
+            String.valueOf(stats.getPendingLeaveRequests()),
+            "Đơn nghỉ phép chờ duyệt",
+            new String[]{}
+        ));
+
+        return dashboardPanel;
+    }
+
+    private JPanel createStatCard(String title, String mainStat, String mainStatLabel, String[] subStats) {
+        JPanel card = new JPanel(new BorderLayout(10, 10));
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Color.LIGHT_GRAY),
+            BorderFactory.createEmptyBorder(15, 15, 15, 15)
+        ));
+        card.setBackground(Color.WHITE);
+
+        JLabel titleLabel = new JLabel(title);
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        titleLabel.setForeground(Color.GRAY);
+        card.add(titleLabel, BorderLayout.NORTH);
+
+        JPanel centerPanel = new JPanel();
+        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
+        centerPanel.setOpaque(false);
+
+        JLabel mainStatLabelComponent = new JLabel(mainStat);
+        mainStatLabelComponent.setFont(new Font("Segoe UI", Font.BOLD, 36));
+        mainStatLabelComponent.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel mainStatSubLabel = new JLabel(mainStatLabel);
+        mainStatSubLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        mainStatSubLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        centerPanel.add(Box.createVerticalGlue());
+        centerPanel.add(mainStatLabelComponent);
+        centerPanel.add(mainStatSubLabel);
+        centerPanel.add(Box.createVerticalGlue());
+        card.add(centerPanel, BorderLayout.CENTER);
+
+        if (subStats.length > 0) {
+            JPanel bottomPanel = new JPanel();
+            bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.Y_AXIS));
+            bottomPanel.setOpaque(false);
+            for (String subStat : subStats) {
+                JLabel subLabel = new JLabel(subStat);
+                subLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+                bottomPanel.add(subLabel);
+            }
+            card.add(bottomPanel, BorderLayout.SOUTH);
+        }
+
+        return card;
+    }
+
+    private JPanel buildWelcomePanel() {
         JPanel panel = new JPanel(new GridBagLayout());
-        JLabel label = new JLabel("Chao mung den voi he thong Quan ly nhan su");
-        label.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        JLabel label = new JLabel("Chào mừng đến với hệ thống Quản lý Nhân sự");
+        label.setFont(new Font("Segoe UI", Font.PLAIN, 22));
         panel.add(label);
         return panel;
     }
 
-    private JPanel placeholderPanel(String title) {
-        JPanel panel = new JPanel(new GridBagLayout());
-        JLabel label = new JLabel(title + " - chua trien khai");
-        label.setFont(new Font("Segoe UI", Font.ITALIC, 16));
-        panel.add(label);
-        return panel;
+    private void setupMenuActions() {
+        Set<String> availableMenus = sidebar.getAvailableMenus();
+        for (String menuTitle : availableMenus) {
+            JButton menuButton = sidebar.getMenuButton(menuTitle);
+            if (menuButton != null) {
+                menuButton.addActionListener(e -> switchCard(menuTitle));
+            }
+        }
+    }
+
+    private void switchCard(String menuTitle) {
+        String cardName = menuCardMap.get(menuTitle);
+        if (cardName != null) {
+            cardLayout.show(contentPanel, cardName);
+            sidebar.setActiveMenu(menuTitle);
+        }
     }
 
     private void onLogout() {
-        int confirm = JOptionPane.showConfirmDialog(
-                this,
-                "Ban co chac muon dang xuat?",
-                "Xac nhan",
-                JOptionPane.YES_NO_OPTION
-        );
-
+        int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc muốn đăng xuất?", "Xác nhận", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
             accountController.logout();
             dispose();

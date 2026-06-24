@@ -155,6 +155,21 @@ public class AccountServiceImpl implements AccountService {
     public List<Account> getAllAccounts() {
         return accountRepository.findAll();
     }
+    
+    @Override
+    public void changeRole(Integer maTk, Account.Role newRole) throws BusinessException {
+        if (newRole == null) {
+            throw new BusinessException("Vai trò mới không được để trống");
+        }
+        Account account = accountRepository.findById(maTk)
+                .orElseThrow(() -> new BusinessException("Không tìm thấy tài khoản"));
+
+        account.setVaiTro(newRole);
+        boolean updated = accountRepository.update(account);
+        if (!updated) {
+            throw new BusinessException("Thay đổi vai trò thất bại");
+        }
+    }
 
     // ===== Validate helpers =====
 
