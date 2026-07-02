@@ -8,10 +8,10 @@ import org.example.security.SessionManager;
 import org.example.view.layout.Footer;
 import org.example.view.layout.Header;
 import org.example.view.layout.Sidebar;
+import org.example.view.util.ViewStyles;
 
 import javax.swing.*;
 import java.awt.*;
-import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.Locale;
@@ -59,6 +59,7 @@ public class MainFrame extends JFrame {
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setMinimumSize(new Dimension(1280, 800));
         setLayout(new BorderLayout());
+        getContentPane().setBackground(ViewStyles.APP_BG);
 
         Account.Role currentUserRole = SessionManager.getInstance().getCurrentRole();
         
@@ -81,6 +82,8 @@ public class MainFrame extends JFrame {
 
     private JMenuBar createMainMenuBar() {
         JMenuBar menuBar = new JMenuBar();
+        menuBar.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, ViewStyles.BORDER));
+        menuBar.setBackground(Color.WHITE);
         JMenu systemMenu = new JMenu("Hệ thống");
 
         if (SessionManager.getInstance().getCurrentRole() == Account.Role.ADMIN) {
@@ -103,7 +106,8 @@ public class MainFrame extends JFrame {
     }
 
     private void buildContentCards() {
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        contentPanel.setBackground(ViewStyles.APP_BG);
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
         
         // Chỉ Admin mới thấy Dashboard, các vai trò khác thấy trang chào mừng
         if (SessionManager.getInstance().getCurrentRole() == Account.Role.ADMIN) {
@@ -123,17 +127,26 @@ public class MainFrame extends JFrame {
         contentPanel.add(new MyNghiPhepView(), "NGHI_PHEP");
         contentPanel.add(new DuyetNghiPhepView(), "DUYET_NGHI_PHEP");
         contentPanel.add(new CauHinhView(), "CAU_HINH");
+
+        ViewStyles.applyTree(contentPanel);
     }
 
     private JPanel buildAdminDashboard() {
-        JPanel dashboardPanel = new JPanel(new GridLayout(1, 4, 20, 20));
-        dashboardPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JPanel dashboardPanel = new JPanel(new BorderLayout(0, 18));
+        dashboardPanel.setBackground(ViewStyles.APP_BG);
+        dashboardPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
 
         DashboardStats stats = dashboardController.getDashboardStats();
         NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
 
-        // Thẻ 1: Nhân sự
-        dashboardPanel.add(createStatCard(
+        JLabel titleLabel = new JLabel("Tổng quan hệ thống");
+        ViewStyles.styleTitle(titleLabel);
+        dashboardPanel.add(titleLabel, BorderLayout.NORTH);
+
+        JPanel statGrid = new JPanel(new GridLayout(0, 2, 18, 18));
+        statGrid.setOpaque(false);
+
+        statGrid.add(createStatCard(
             "TỔNG QUAN NHÂN SỰ",
             String.valueOf(stats.getTotalActiveEmployees()),
             "Tổng số nhân viên",
@@ -143,8 +156,7 @@ public class MainFrame extends JFrame {
             }
         ));
 
-        // Thẻ 2: Chấm công
-        dashboardPanel.add(createStatCard(
+        statGrid.add(createStatCard(
             "CHẤM CÔNG HÔM NAY",
             stats.getCheckInsToday() + " / " + stats.getTotalActiveEmployees(),
             "Đã check-in",
@@ -154,8 +166,7 @@ public class MainFrame extends JFrame {
             }
         ));
 
-        // Thẻ 3: Lương
-        dashboardPanel.add(createStatCard(
+        statGrid.add(createStatCard(
             "CHI PHÍ LƯƠNG (Tháng này)",
             currencyFormatter.format(stats.getTotalSalaryThisMonth()),
             "Tổng lương thực nhận",
@@ -165,28 +176,28 @@ public class MainFrame extends JFrame {
             }
         ));
 
-        // Thẻ 4: Công việc
-        dashboardPanel.add(createStatCard(
+        statGrid.add(createStatCard(
             "CÔNG VIỆC CẦN XỬ LÝ",
             String.valueOf(stats.getPendingLeaveRequests()),
             "Đơn nghỉ phép chờ duyệt",
             new String[]{}
         ));
 
+        dashboardPanel.add(statGrid, BorderLayout.CENTER);
         return dashboardPanel;
     }
 
     private JPanel createStatCard(String title, String mainStat, String mainStatLabel, String[] subStats) {
         JPanel card = new JPanel(new BorderLayout(10, 10));
         card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(Color.LIGHT_GRAY),
-            BorderFactory.createEmptyBorder(15, 15, 15, 15)
+            BorderFactory.createLineBorder(ViewStyles.BORDER),
+            BorderFactory.createEmptyBorder(18, 18, 18, 18)
         ));
-        card.setBackground(Color.WHITE);
+        card.setBackground(ViewStyles.SURFACE);
 
         JLabel titleLabel = new JLabel(title);
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        titleLabel.setForeground(Color.GRAY);
+        titleLabel.setForeground(ViewStyles.MUTED_TEXT);
         card.add(titleLabel, BorderLayout.NORTH);
 
         JPanel centerPanel = new JPanel();
@@ -194,11 +205,13 @@ public class MainFrame extends JFrame {
         centerPanel.setOpaque(false);
 
         JLabel mainStatLabelComponent = new JLabel(mainStat);
-        mainStatLabelComponent.setFont(new Font("Segoe UI", Font.BOLD, 36));
+        mainStatLabelComponent.setFont(new Font("Segoe UI", Font.BOLD, 34));
+        mainStatLabelComponent.setForeground(ViewStyles.TEXT);
         mainStatLabelComponent.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel mainStatSubLabel = new JLabel(mainStatLabel);
         mainStatSubLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        mainStatSubLabel.setForeground(ViewStyles.MUTED_TEXT);
         mainStatSubLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         centerPanel.add(Box.createVerticalGlue());
@@ -214,6 +227,7 @@ public class MainFrame extends JFrame {
             for (String subStat : subStats) {
                 JLabel subLabel = new JLabel(subStat);
                 subLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+                subLabel.setForeground(ViewStyles.MUTED_TEXT);
                 bottomPanel.add(subLabel);
             }
             card.add(bottomPanel, BorderLayout.SOUTH);
@@ -224,9 +238,31 @@ public class MainFrame extends JFrame {
 
     private JPanel buildWelcomePanel() {
         JPanel panel = new JPanel(new GridBagLayout());
-        JLabel label = new JLabel("Chào mừng đến với hệ thống Quản lý Nhân sự");
-        label.setFont(new Font("Segoe UI", Font.PLAIN, 22));
-        panel.add(label);
+        panel.setBackground(ViewStyles.APP_BG);
+
+        JPanel welcomeCard = ViewStyles.createSurfacePanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(4, 6, 4, 6);
+
+        JLabel titleLabel = new JLabel("Chào mừng đến với hệ thống Quản lý Nhân sự", SwingConstants.CENTER);
+        ViewStyles.styleTitle(titleLabel);
+        welcomeCard.add(titleLabel, gbc);
+
+        Account account = SessionManager.getInstance().getCurrentAccount();
+        JLabel subLabel = new JLabel(
+                account != null
+                        ? "Bạn đang đăng nhập với tài khoản " + account.getTenDangNhap() + " - vai trò " + account.getVaiTro()
+                        : "Vui lòng chọn chức năng ở thanh điều hướng bên trái",
+                SwingConstants.CENTER
+        );
+        subLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        subLabel.setForeground(ViewStyles.MUTED_TEXT);
+        gbc.gridy = 1;
+        welcomeCard.add(subLabel, gbc);
+
+        panel.add(welcomeCard);
         return panel;
     }
 

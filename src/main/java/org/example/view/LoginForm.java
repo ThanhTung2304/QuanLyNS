@@ -4,6 +4,7 @@ import org.example.controller.AccountController;
 import org.example.entity.Account;
 import org.example.exception.BusinessException;
 import org.example.exception.DataAccessException;
+import org.example.view.util.ViewStyles;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,7 +17,7 @@ import java.awt.event.ActionEvent;
 public class LoginForm extends JFrame {
 
     private JTextField txtTenDangNhap;
-    private JTextField txtMatKhau;
+    private JPasswordField txtMatKhau;
     private JButton btnDangNhap;
     private JButton btnThoat;
 
@@ -30,69 +31,83 @@ public class LoginForm extends JFrame {
     private void initComponents() {
         setTitle("Đăng nhập - Hệ thống Quản lý Nhân sự");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(420, 280);
+        setSize(620, 420);
         setLocationRelativeTo(null);
         setResizable(false);
 
-        JPanel mainPanel = new JPanel(new GridBagLayout());
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
+        JPanel rootPanel = new JPanel(new GridBagLayout());
+        rootPanel.setBackground(ViewStyles.APP_BG);
+        rootPanel.setBorder(BorderFactory.createEmptyBorder(28, 28, 28, 28));
+
+        JPanel mainPanel = ViewStyles.createSurfacePanel(new GridBagLayout());
+        mainPanel.setPreferredSize(new Dimension(540, 320));
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 8, 8, 8);
+        gbc.insets = new Insets(7, 8, 7, 8);
         gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
 
-        // Tiêu đề
-        JLabel lblTitle = new JLabel("ĐĂNG NHẬP HỆ THỐNG", SwingConstants.CENTER);
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        JLabel lblTitle = new JLabel("Đăng nhập hệ thống", SwingConstants.CENTER);
+        ViewStyles.styleTitle(lblTitle);
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
         mainPanel.add(lblTitle, gbc);
 
-        // Tên đăng nhập
-        gbc.gridwidth = 1;
+        gbc.gridwidth = 2;
         gbc.gridy = 1;
         gbc.gridx = 0;
-        mainPanel.add(new JLabel("Tên đăng nhập:"), gbc);
+        mainPanel.add(new JLabel("Tên đăng nhập"), gbc);
 
-        txtTenDangNhap = new JTextField(18);
-        gbc.gridx = 1;
-        mainPanel.add(txtTenDangNhap, gbc);
-
-        // Mật khẩu
+        txtTenDangNhap = new JTextField(34);
         gbc.gridy = 2;
         gbc.gridx = 0;
-        mainPanel.add(new JLabel("Mật khẩu:"), gbc);
+        mainPanel.add(txtTenDangNhap, gbc);
 
-        txtMatKhau = new JTextField(18);
-        gbc.gridx = 1;
+        gbc.gridy = 3;
+        gbc.gridx = 0;
+        mainPanel.add(new JLabel("Mật khẩu"), gbc);
+
+        txtMatKhau = new JPasswordField(34);
+        gbc.gridy = 4;
+        gbc.gridx = 0;
         mainPanel.add(txtMatKhau, gbc);
 
-        // Nút hành động
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 10, 0));
+        buttonPanel.setOpaque(false);
         btnDangNhap = new JButton("Đăng nhập");
         btnThoat = new JButton("Thoát");
         buttonPanel.add(btnDangNhap);
         buttonPanel.add(btnThoat);
 
-        gbc.gridy = 3;
+        gbc.gridy = 5;
         gbc.gridx = 0;
         gbc.gridwidth = 2;
+        gbc.insets = new Insets(18, 8, 7, 8);
         mainPanel.add(buttonPanel, gbc);
 
-        add(mainPanel);
+        ViewStyles.applyTree(mainPanel);
+        Dimension inputSize = new Dimension(420, 42);
+        txtTenDangNhap.setPreferredSize(inputSize);
+        txtTenDangNhap.setMinimumSize(inputSize);
+        txtMatKhau.setPreferredSize(inputSize);
+        txtMatKhau.setMinimumSize(inputSize);
+        ViewStyles.stylePrimaryButton(btnDangNhap);
+        ViewStyles.styleDangerButton(btnThoat);
 
-        // Sự kiện
+        rootPanel.add(mainPanel);
+        add(rootPanel);
+
         btnDangNhap.addActionListener(this::onDangNhap);
         btnThoat.addActionListener(e -> System.exit(0));
 
-        // Cho phép nhấn Enter ở ô mật khẩu để đăng nhập luôn
         txtMatKhau.addActionListener(this::onDangNhap);
+        getRootPane().setDefaultButton(btnDangNhap);
     }
 
     private void onDangNhap(ActionEvent e) {
         String tenDangNhap = txtTenDangNhap.getText().trim();
-        String matKhau = txtMatKhau.getText();
+        String matKhau = new String(txtMatKhau.getPassword());
 
         if (tenDangNhap.isEmpty() || matKhau.isEmpty()) {
             JOptionPane.showMessageDialog(this,

@@ -17,6 +17,7 @@ public class DuyetNghiPhepView extends JPanel {
     private final NghiPhepController nghiPhepController;
     private JTable table;
     private DefaultTableModel tableModel;
+    private JComboBox<String> cbTrangThai;
     private boolean isDataLoaded = false;
 
     public DuyetNghiPhepView() {
@@ -28,11 +29,23 @@ public class DuyetNghiPhepView extends JPanel {
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JLabel titleLabel = new JLabel("Duyệt Đơn Nghỉ Phép", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        add(titleLabel, BorderLayout.NORTH);
+        JPanel topPanel = new JPanel(new BorderLayout(10, 10));
+        topPanel.setOpaque(false);
 
-        String[] columnNames = {"Mã Đơn", "Mã NV", "Từ ngày", "Đến ngày", "Lý do"};
+        JLabel titleLabel = new JLabel("Duyệt Đơn Nghỉ Phép", SwingConstants.LEFT);
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        topPanel.add(titleLabel, BorderLayout.NORTH);
+
+        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        filterPanel.setOpaque(false);
+        cbTrangThai = new JComboBox<>(new String[]{"Chờ duyệt", "Đã duyệt", "Từ chối", "Tất cả"});
+        filterPanel.add(new JLabel("Trạng thái:"));
+        filterPanel.add(cbTrangThai);
+        topPanel.add(filterPanel, BorderLayout.SOUTH);
+
+        add(topPanel, BorderLayout.NORTH);
+
+        String[] columnNames = {"Mã Đơn", "Mã NV", "Từ ngày", "Đến ngày", "Lý do", "Trạng thái", "Người duyệt"};
         tableModel = new DefaultTableModel(columnNames, 0) {
             @Override public boolean isCellEditable(int row, int column) { return false; }
         };
@@ -62,19 +75,26 @@ public class DuyetNghiPhepView extends JPanel {
         btnApprove.addActionListener(e -> handleApproval(true));
         btnReject.addActionListener(e -> handleApproval(false));
         btnRefresh.addActionListener(e -> loadData());
+        cbTrangThai.addActionListener(e -> loadData());
     }
 
     private void loadData() {
         try {
-            // Chỉ hiển thị các đơn đang chờ duyệt
+            String selectedStatus = (String) cbTrangThai.getSelectedItem();
             List<NghiPhep> list = nghiPhepController.getAll().stream()
-                    .filter(np -> np.getTrangThai() == NghiPhep.TrangThaiNghiPhep.CHO_DUYET)
+                    .filter(np -> matchesStatus(np, selectedStatus))
                     .collect(Collectors.toList());
             
             tableModel.setRowCount(0);
             for (NghiPhep np : list) {
                 tableModel.addRow(new Object[]{
-                        np.getMaNp(), np.getMaNv(), np.getNgayBatDau(), np.getNgayKetThuc(), np.getLyDo()
+                        np.getMaNp(),
+                        np.getMaNv(),
+                        np.getNgayBatDau(),
+                        np.getNgayKetThuc(),
+                        np.getLyDo(),
+                        np.getTrangThai(),
+                        np.getNguoiDuyet() != null ? np.getNguoiDuyet() : ""
                 });
             }
         } catch (Exception e) {
@@ -82,10 +102,35 @@ public class DuyetNghiPhepView extends JPanel {
         }
     }
 
+    private boolean matchesStatus(NghiPhep nghiPhep, String selectedStatus) {
+        if ("Tất cả".equals(selectedStatus)) {
+            return true;
+        }
+        if ("Chờ duyệt".equals(selectedStatus)) {
+            return nghiPhep.getTrangThai() == NghiPhep.TrangThaiNghiPhep.CHO_DUYET;
+        }
+        if ("Đã duyệt".equals(selectedStatus)) {
+            return nghiPhep.getTrangThai() == NghiPhep.TrangThaiNghiPhep.DA_DUYET;
+        }
+        if ("Từ chối".equals(selectedStatus)) {
+            return nghiPhep.getTrangThai() == NghiPhep.TrangThaiNghiPhep.TU_CHOI;
+        }
+        return true;
+    }
+
     private void handleApproval(boolean isApproved) {
         int row = table.getSelectedRow();
         if (row != -1) {
             Integer maNp = (Integer) tableModel.getValueAt(row, 0);
+            NghiPhep.TrangThaiNghiPhep trangThai = (NghiPhep.TrangThaiNghiPhep) tableModel.getValueAt(row, 5);
+            if (trangThai != NghiPhep.TrangThaiNghiPhep.CHO_DUYET) {
+                JOptionPane.showMessageDialog(this,
+                        "Đơn này đã được xử lý, không thể phê duyệt hoặc từ chối lại.",
+                        "Thông báo",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
             String action = isApproved ? "phê duyệt" : "từ chối";
             
             if (JOptionPane.showConfirmDialog(this, "Bạn có chắc muốn " + action + " đơn này?", "Xác nhận", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
