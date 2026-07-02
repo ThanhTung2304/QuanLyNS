@@ -1,15 +1,20 @@
 package org.example.view;
 
 import org.example.controller.AccountController;
+import org.example.controller.NhanVienController;
 import org.example.entity.Account;
+import org.example.entity.NhanVien;
+import org.example.security.SessionManager;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public class AccountView extends JPanel {
 
@@ -23,10 +28,12 @@ public class AccountView extends JPanel {
     private JButton btnRefresh;
 
     private final AccountController accountController;
+    private final NhanVienController nhanVienController;
     private boolean isDataLoaded = false;
 
     public AccountView() {
         this.accountController = new AccountController();
+        this.nhanVienController = new NhanVienController();
         initComponents();
     }
 
@@ -167,14 +174,43 @@ public class AccountView extends JPanel {
     }
 
     private void addAccount() {
-        JTextField txtMaNv = new JTextField();
+        if (SessionManager.getInstance().getCurrentRole() != Account.Role.ADMIN) {
+            JOptionPane.showMessageDialog(this,
+                    "Chỉ tài khoản ADMIN mới được tạo tài khoản cho nhân viên khác.",
+                    "Không có quyền",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        List<NhanVien> availableEmployees = getEmployeesWithoutAccount();
+        if (availableEmployees.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Không có nhân viên nào đủ điều kiện tạo tài khoản.\n"
+                            + "Mỗi nhân viên chỉ được có một tài khoản. Hãy thêm nhân viên mới trước, hoặc kiểm tra danh sách tài khoản hiện có.",
+                    "Không thể tạo tài khoản",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        JComboBox<NhanVien> cbNhanVien = new JComboBox<>(availableEmployees.toArray(new NhanVien[0]));
+        cbNhanVien.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof NhanVien nhanVien) {
+                    setText(nhanVien.getMaNv() + " - " + nhanVien.getHoTen());
+                }
+                return this;
+            }
+        });
+
         JTextField txtTenDangNhap = new JTextField();
         JPasswordField txtMatKhau = new JPasswordField();
         JComboBox<Account.Role> cbVaiTro = new JComboBox<>(Account.Role.values());
 
         JPanel formPanel = new JPanel(new GridLayout(0, 2, 10, 10));
-        formPanel.add(new JLabel("Mã nhân viên:"));
-        formPanel.add(txtMaNv);
+        formPanel.add(new JLabel("Nhân viên:"));
+        formPanel.add(cbNhanVien);
         formPanel.add(new JLabel("Tên đăng nhập:"));
         formPanel.add(txtTenDangNhap);
         formPanel.add(new JLabel("Mật khẩu:"));
@@ -187,8 +223,14 @@ public class AccountView extends JPanel {
 
         if (result == JOptionPane.OK_OPTION) {
             try {
-                String maNv = txtMaNv.getText();
-                String tenDangNhap = txtTenDangNhap.getText();
+                NhanVien selectedNhanVien = (NhanVien) cbNhanVien.getSelectedItem();
+                if (selectedNhanVien == null) {
+                    JOptionPane.showMessageDialog(this, "Vui lòng chọn nhân viên.", "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                String maNv = selectedNhanVien.getMaNv();
+                String tenDangNhap = txtTenDangNhap.getText().trim();
                 String matKhau = new String(txtMatKhau.getPassword());
                 Account.Role vaiTro = (Account.Role) cbVaiTro.getSelectedItem();
 
@@ -200,6 +242,19 @@ public class AccountView extends JPanel {
                 JOptionPane.showMessageDialog(this, "Lỗi khi tạo tài khoản: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+
+    private List<NhanVien> getEmployeesWithoutAccount() {
+        List<Account> accounts = accountController.getAllAccounts();
+        Set<String> employeeIdsWithAccount = new HashSet<>();
+        for (Account account : accounts) {
+            employeeIdsWithAccount.add(account.getMaNv());
+        }
+
+        return nhanVienController.getAllNhanVien().stream()
+                .filter(nhanVien -> nhanVien.getMaNv() != null)
+                .filter(nhanVien -> !employeeIdsWithAccount.contains(nhanVien.getMaNv()))
+                .toList();
     }
 
     private void resetPassword() {

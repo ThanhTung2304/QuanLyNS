@@ -4,6 +4,7 @@ import org.example.controller.ChamCongController;
 import org.example.entity.Account;
 import org.example.entity.ChamCong;
 import org.example.security.SessionManager;
+import org.example.view.util.ViewStyles;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,6 +17,7 @@ public class Header extends JPanel {
     private JButton btnChamCong; // Một nút duy nhất
     private JLabel lblCheckInStatus;
     private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public Header(Runnable onLogout) {
         this.chamCongController = new ChamCongController();
@@ -25,8 +27,8 @@ public class Header extends JPanel {
 
     private void initComponents(Runnable onLogout) {
         setLayout(new BorderLayout());
-        setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-        setBackground(new Color(33, 47, 61));
+        setBorder(BorderFactory.createEmptyBorder(12, 20, 12, 20));
+        setBackground(Color.WHITE);
 
         Account account = SessionManager.getInstance().getCurrentAccount();
         if (account == null) {
@@ -37,8 +39,8 @@ public class Header extends JPanel {
         JLabel welcomeLabel = new JLabel(
                 "Xin chào, " + account.getTenDangNhap() + " (" + account.getVaiTro() + ")"
         );
-        welcomeLabel.setForeground(Color.WHITE);
-        welcomeLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        welcomeLabel.setForeground(ViewStyles.TEXT);
+        welcomeLabel.setFont(new Font("Segoe UI", Font.BOLD, 15));
         add(welcomeLabel, BorderLayout.WEST);
 
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
@@ -46,7 +48,8 @@ public class Header extends JPanel {
 
         btnChamCong = new JButton("Chấm Công");
         lblCheckInStatus = new JLabel();
-        lblCheckInStatus.setForeground(Color.GREEN);
+        lblCheckInStatus.setForeground(new Color(22, 101, 52));
+        lblCheckInStatus.setFont(new Font("Segoe UI", Font.PLAIN, 13));
 
         actionPanel.add(btnChamCong);
         actionPanel.add(lblCheckInStatus);
@@ -56,6 +59,9 @@ public class Header extends JPanel {
 
         JButton logoutButton = new JButton("Đăng xuất");
         actionPanel.add(logoutButton);
+
+        ViewStyles.stylePrimaryButton(btnChamCong);
+        ViewStyles.styleDangerButton(logoutButton);
         
         add(actionPanel, BorderLayout.EAST);
 
@@ -95,18 +101,18 @@ public class Header extends JPanel {
                     // Đã check-in và check-out
                     btnChamCong.setText("Đã chấm công");
                     btnChamCong.setEnabled(false);
-                    lblCheckInStatus.setText("Hoàn thành lúc: " + todayChamCong.getGioRa().format(timeFormatter));
+                    lblCheckInStatus.setText(buildTodayStatusText(todayChamCong));
                 } else {
                     // Đã check-in, chưa check-out
                     btnChamCong.setText("Check-out");
                     btnChamCong.setEnabled(true);
-                    lblCheckInStatus.setText("Đã check-in lúc: " + todayChamCong.getGioVao().format(timeFormatter));
+                    lblCheckInStatus.setText(buildTodayStatusText(todayChamCong));
                 }
             } else {
                 // Chưa check-in
                 btnChamCong.setText("Check-in");
                 btnChamCong.setEnabled(true);
-                lblCheckInStatus.setText("");
+                lblCheckInStatus.setText("Hôm nay chưa chấm công");
             }
         } catch (Exception e) {
             btnChamCong.setText("Lỗi");
@@ -116,5 +122,19 @@ public class Header extends JPanel {
         
         revalidate();
         repaint();
+    }
+
+    private String buildTodayStatusText(ChamCong chamCong) {
+        String ngay = chamCong.getNgay() != null ? chamCong.getNgay().format(dateFormatter) : "";
+        String gioVao = chamCong.getGioVao() != null ? chamCong.getGioVao().format(timeFormatter) : "--:--:--";
+        String gioRa = chamCong.getGioRa() != null ? chamCong.getGioRa().format(timeFormatter) : "Chưa check-out";
+        String trangThai = chamCong.getTrangThai() != null ? chamCong.getTrangThai().toString() : "";
+        String soGioLam = chamCong.getGioRa() != null ? " | Số giờ: " + chamCong.getSoGioLam() : "";
+
+        return "Ngày " + ngay
+                + " | Vào: " + gioVao
+                + " | Ra: " + gioRa
+                + " | Trạng thái: " + trangThai
+                + soGioLam;
     }
 }

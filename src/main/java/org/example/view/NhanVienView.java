@@ -223,6 +223,10 @@ public class NhanVienView extends JPanel {
             // Tìm và chọn đúng phòng ban, chức vụ trong ComboBox
             phongBanList.stream().filter(pb -> pb.getMaPhong().equals(nhanVien.getMaPb())).findFirst().ifPresent(cbPhongBan::setSelectedItem);
             chucVuList.stream().filter(cv -> cv.getMaChucVu().equals(nhanVien.getMaChucVu())).findFirst().ifPresent(cbChucVu::setSelectedItem);
+        } else {
+            txtMaNv.setText(generateNextMaNv());
+            txtMaNv.setEditable(false);
+            txtMaNv.setToolTipText("Mã nhân viên được tự động tạo");
         }
 
         // --- Xây dựng panel form ---
@@ -289,6 +293,27 @@ public class NhanVienView extends JPanel {
                 JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+
+    private String generateNextMaNv() {
+        int maxNumber = 0;
+        try {
+            for (NhanVien nv : nhanVienController.getAllNhanVien()) {
+                String maNv = nv.getMaNv();
+                if (maNv == null || !maNv.matches("NV\\d+")) {
+                    continue;
+                }
+
+                int number = Integer.parseInt(maNv.substring(2));
+                if (number > maxNumber) {
+                    maxNumber = number;
+                }
+            }
+        } catch (Exception e) {
+            return "NV001";
+        }
+
+        return String.format("NV%03d", maxNumber + 1);
     }
 
     private void showDetailsDialog() {

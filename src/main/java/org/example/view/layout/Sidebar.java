@@ -15,11 +15,11 @@ public class Sidebar extends JScrollPane {
     private final Map<String, JButton> menuMap = new LinkedHashMap<>();
     private final Map<Account.Role, List<String>> rolePermissions = new HashMap<>();
 
-    private static final Color BG        = new Color(33, 47, 61);
-    private static final Color BG_ITEM   = new Color(45, 58, 75);
-    private static final Color BG_HOVER  = new Color(60, 75, 95);
-    private static final Color BG_ACTIVE = new Color(85, 120, 200);
-    private static final Color ACCENT    = new Color(0, 150, 255);
+    private static final Color BG        = new Color(17, 24, 39);
+    private static final Color BG_ITEM   = new Color(31, 41, 55);
+    private static final Color BG_HOVER  = new Color(55, 65, 81);
+    private static final Color BG_ACTIVE = new Color(37, 99, 235);
+    private static final Color ACCENT    = new Color(96, 165, 250);
 
     public Sidebar(Account.Role role) {
         container.setLayout(new BorderLayout());
@@ -27,11 +27,25 @@ public class Sidebar extends JScrollPane {
 
         menuPanel.setLayout(new BoxLayout(menuPanel, BoxLayout.Y_AXIS));
         menuPanel.setBackground(BG);
-        menuPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+        menuPanel.setBorder(BorderFactory.createEmptyBorder(8, 10, 14, 10));
+
+        JPanel brandPanel = new JPanel(new BorderLayout());
+        brandPanel.setOpaque(false);
+        brandPanel.setBorder(BorderFactory.createEmptyBorder(18, 14, 18, 14));
+        JLabel brandLabel = new JLabel("Quản lý nhân sự");
+        brandLabel.setForeground(Color.WHITE);
+        brandLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        JLabel roleLabel = new JLabel(role != null ? role.toString() : "GUEST");
+        roleLabel.setForeground(new Color(203, 213, 225));
+        roleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        brandPanel.add(brandLabel, BorderLayout.NORTH);
+        brandPanel.add(roleLabel, BorderLayout.SOUTH);
+
+        container.add(brandPanel, BorderLayout.NORTH);
         container.add(menuPanel, BorderLayout.CENTER);
 
         setViewportView(container);
-        setPreferredSize(new Dimension(240, 0));
+        setPreferredSize(new Dimension(260, 0));
         setBorder(null);
         setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
@@ -62,15 +76,15 @@ public class Sidebar extends JScrollPane {
     }
 
     private void addMenu(String title) {
-        JButton btn = new JButton("  " + title);
+        JButton btn = new JButton(title);
         btn.setFocusPainted(false);
         btn.setForeground(Color.WHITE);
         btn.setBackground(BG_ITEM);
-        btn.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 13));
         btn.setHorizontalAlignment(SwingConstants.LEFT);
-        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        btn.setBorder(BorderFactory.createEmptyBorder(10, 14, 10, 14));
 
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
@@ -87,7 +101,7 @@ public class Sidebar extends JScrollPane {
 
         menuMap.put(title, btn);
         menuPanel.add(btn);
-        menuPanel.add(Box.createVerticalStrut(4));
+        menuPanel.add(Box.createVerticalStrut(6));
     }
 
     public void setActiveMenu(String menuLabel) {
@@ -97,10 +111,10 @@ public class Sidebar extends JScrollPane {
             if (active) {
                 v.setBorder(BorderFactory.createCompoundBorder(
                         BorderFactory.createMatteBorder(0, 4, 0, 0, ACCENT),
-                        BorderFactory.createEmptyBorder(10, 16, 10, 20)
+                        BorderFactory.createEmptyBorder(10, 10, 10, 14)
                 ));
             } else {
-                v.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+                v.setBorder(BorderFactory.createEmptyBorder(10, 14, 10, 14));
             }
         });
     }
